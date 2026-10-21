@@ -2,8 +2,8 @@
 
 Clean-room, MIT-licensed TypeScript astrology engine, checked against a Python
 reference and golden fixtures. Package/API map: `llms.txt`. Contribution rules:
-`CONTRIBUTING.md`. Agent-facing API pitfalls: `docs/agents.md`. MCP protocol:
-`MCP_SPEC.md`.
+`CONTRIBUTING.md`. Developer fork process: `docs/fork-workflow.md`.
+Agent-facing API pitfalls: `docs/agents.md`. MCP protocol: `MCP_SPEC.md`.
 
 ## The conformance suite is the contract
 
@@ -22,15 +22,25 @@ will not be merged.
 
 ## Git workflow
 
-`dev` is the canonical work branch; `main` is release-only.
+Agents follow upstream's git policy (`.cursor/rules/git-workflow.mdc`):
 
 - Commit and push work to `dev`. Nothing else by default.
-- Never commit, push, reset, or force-push `main`. Promotion is the
-  maintainer's call: `CAELUS_ALLOW_MAIN_PUSH=1 git push origin main`.
-- Do not create feature branches or open pull requests unless explicitly asked.
-- Before every push, verify the current branch is `dev` (or a branch named this
-  session). If it is `main`, stop.
+- Never commit, push, reset, or force-push `main`.
+- Do not create feature branches or open pull requests unless asked.
+- Before every push, verify the current branch is `dev` (or a branch named in
+  this session). If it is `main`, stop.
 - A local `pre-push` hook blocks pushes to `main`; do not bypass it.
+
+Developers working the fork branch flow (`feature/*` off `dev`, pull requests
+to `dev`, upstream sync, fast-forward promotion to `main`) should read
+`docs/fork-workflow.md`.
+
+## Local opencode artifacts
+
+`AGENTS.md`, `opencode.json`, and `.opencode/**` are fork-owned; upstream does
+not ship them. When upstream changes its policies (`CONTRIBUTING.md`,
+`.cursor/rules/**`), fold those changes into the local artifacts with the
+`sync-agent-config` skill (`.opencode/skills/sync-agent-config/`).
 
 ## Provenance and licensing
 

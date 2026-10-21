@@ -69,11 +69,9 @@
   --syntax-punct: #89ddff;
   --syntax-prop: #e2d9ff;
 
-  /* geometry */
-  --maxw: 760px;
-  --maxw-wide: 1100px;
-  /* Playground chart workspace only. The rest of the site stays on --maxw-wide. */
-  --maxw-workspace: 1360px;
+  /* geometry — one site shell. Header, footer, and every page share `--maxw`.
+     Running copy keeps a shorter measure; grids and the playground use the shell. */
+  --maxw: 1100px;
   --radius: 8px;
   --radius-sm: 4px;
   --gutter: 1.25rem;
@@ -96,6 +94,7 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  overflow-x: clip;
 }
 
 body {
@@ -105,12 +104,21 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
   font-size: var(--fs-body);
   line-height: 1.6;
+  overflow-wrap: break-word;
   font-feature-settings: "cv05" 1, "ss01" 1;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --fs-h1: 1.75rem;
+    --fs-lead: 1.1rem;
+    --gutter: 1rem;
+  }
 }
 
 main {
@@ -135,39 +143,39 @@ body::before {
   opacity: 0.7;
 }
 
-/* ---- layout containers ---- */
-.container {
+/* ---- layout containers ----
+   One shell. `.container-wide` and `.container-workspace` are aliases so
+   older class names keep working. */
+.container,
+.container-wide,
+.container-workspace {
   width: 100%;
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 0 var(--gutter);
-}
-
-.container-wide {
-  width: 100%;
-  max-width: var(--maxw-wide);
-  margin: 0 auto;
-  padding: 0 var(--gutter);
-}
-
-.container-workspace {
-  width: 100%;
-  max-width: var(--maxw-workspace);
-  margin: 0 auto;
-  padding: 0 var(--gutter);
+  padding-left: max(var(--gutter), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--gutter), env(safe-area-inset-right, 0px));
 }
 
 .page {
-  padding: 2.5rem 0 4rem;
+  padding-top: 2.5rem;
+  padding-bottom: 4rem;
 }
 
 .page-hero {
   margin-bottom: 0.25rem;
 }
 
-/* Hero copy keeps a readable measure even inside a wide container. */
-.page-hero p {
-  max-width: 46rem;
+/* Hero and running copy keep a readable measure inside the shell. */
+.page-hero p,
+.lead {
+  max-width: 42rem;
+}
+
+.page > p,
+.docs-content > p,
+.docs-content > ul,
+.docs-content > ol {
+  max-width: 42rem;
 }
 
 .page-hero .cta {
@@ -265,6 +273,7 @@ h1 {
   font-size: var(--fs-h1);
   letter-spacing: -0.02em;
   margin: 0 0 0.6rem;
+  text-wrap: balance;
 }
 
 h2 {
@@ -556,13 +565,22 @@ th {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  min-width: 0;
 }
 
 .workspace__chrome {
   display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.workspace__chrome-row {
+  display: flex;
   flex-wrap: wrap;
-  align-items: end;
-  gap: 0.75rem 1rem;
+  align-items: center;
+  gap: 0.55rem 0.9rem;
+  min-width: 0;
 }
 
 .workspace__body {
@@ -574,6 +592,7 @@ th {
 
 .workspace__figure {
   max-width: 480px;
+  min-width: 0;
 }
 
 .workspace__figure svg {
@@ -807,7 +826,8 @@ a.card:hover,
 /* ---- form controls ----
    The single control style for the playground's inputs, selects, and small
    action buttons. Labels sit above their control (.field) so a wrapped row of
-   controls still reads as labelled columns. */
+   controls still reads as labelled columns. Toggling Advanced must not shove
+   those columns: chrome is stacked rows, and .check sits on the input baseline. */
 .control {
   background: var(--surface-3);
   color: var(--text);
@@ -816,6 +836,8 @@ a.card:hover,
   padding: 0.35rem 0.55rem;
   font: inherit;
   font-size: 0.85rem;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .control:focus-visible {
@@ -835,13 +857,16 @@ button.control:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 0.7rem 0.8rem;
-  align-items: flex-end;
+  align-items: flex-start;
+  min-width: 0;
 }
 
 .field {
   display: flex;
   flex-direction: column;
   gap: 0.28rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .field__label {
@@ -855,6 +880,96 @@ button.control:hover {
 .field__row {
   display: flex;
   gap: 0.4rem;
+  min-width: 0;
+  align-items: center;
+}
+
+.field__row .control {
+  min-width: 0;
+}
+
+.field__row input.control {
+  flex: 1 1 8rem;
+}
+
+.field--place {
+  flex: 1 1 12rem;
+  max-width: min(16rem, 100%);
+}
+
+.field--datetime {
+  flex: 1 1 16rem;
+  max-width: min(22rem, 100%);
+}
+
+.field--datetime .field__row,
+.field--select .control {
+  width: 100%;
+}
+
+.field--select {
+  flex: 1 1 8rem;
+  max-width: min(12rem, 100%);
+}
+
+.field--coord .control {
+  width: 5.5rem;
+}
+
+.field--name .control {
+  width: 8rem;
+}
+
+.field--compact {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.field--compact .control {
+  width: 3.5rem;
+}
+
+.field--actions .field__row {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+input.control[type="datetime-local"],
+input.control[type="date"] {
+  min-width: 0;
+  width: 100%;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.check input {
+  accent-color: var(--accent);
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.city-picker {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.city-picker .control {
+  width: 100%;
 }
 
 /* ---- segmented control (chart view switcher) ---- */
@@ -863,6 +978,18 @@ button.control:hover {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   overflow: hidden;
+  max-width: 100%;
+}
+
+.seg--wrap {
+  display: flex;
+  flex-wrap: wrap;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.seg--wrap .seg__btn {
+  padding-inline: 0.55rem;
 }
 
 .seg__btn {
@@ -873,6 +1000,7 @@ button.control:hover {
   border: none;
   color: var(--text-dim);
   cursor: pointer;
+  white-space: nowrap;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -1032,6 +1160,12 @@ button.control:hover {
   }
 }
 
+@media (min-width: 900px) {
+  .capability-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .capability-grid__title {
   display: block;
   font-weight: 600;
@@ -1072,15 +1206,9 @@ a.capability-grid__title:hover {
 /* ---- features page: stat band + capability cards ---- */
 .feature-stats {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(9.75rem, 1fr));
   gap: 0.75rem;
   margin: 1.5rem 0 1rem;
-}
-
-@media (min-width: 640px) {
-  .feature-stats {
-    grid-template-columns: repeat(3, 1fr);
-  }
 }
 
 .stat {
@@ -1138,6 +1266,12 @@ a.stat:hover .stat__num {
   }
 }
 
+@media (min-width: 900px) {
+  .feature-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .feature-card h3 {
   margin: 0 0 0.5rem;
   font-size: 1rem;
@@ -1176,17 +1310,9 @@ a.stat:hover .stat__num {
   overflow-x: auto;
 }
 
-/* ---- comparison band (breaks out of the narrow column to full width) ---- */
+/* ---- comparison band ---- */
 .feature-compare {
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
   margin-top: 1.25rem;
-  padding: 0 var(--gutter);
-}
-
-.feature-compare__inner {
-  max-width: var(--maxw-wide);
-  margin: 0 auto;
 }
 
 .cmp-block {
@@ -1292,7 +1418,10 @@ th.cmp-me {
   display: flex;
   align-items: center;
   gap: 1.25rem;
-  height: 56px;
+  min-height: 56px;
+  height: auto;
+  flex-wrap: wrap;
+  padding-block: 0.35rem;
 }
 
 .wordmark {
@@ -1318,6 +1447,7 @@ th.cmp-me {
 
 .site-nav a {
   color: var(--text-mute);
+  padding: 0.35rem 0;
 }
 
 .site-nav a:hover,
@@ -1333,7 +1463,7 @@ th.cmp-me {
 
 @media (max-width: 720px) {
   .site-nav {
-    gap: 0.85rem;
+    gap: 0.75rem;
     font-size: 0.8rem;
   }
   .site-nav__hide-sm {
@@ -1341,6 +1471,35 @@ th.cmp-me {
   }
   .site-nav__install {
     padding-inline: 0.65rem;
+  }
+}
+
+/* Phone: drop the header Install (the hero already has it) so nav stays
+   on one row with usable tap targets. */
+@media (max-width: 560px) {
+  .site-header__inner {
+    gap: 0.75rem;
+  }
+  .site-nav {
+    gap: 0.55rem;
+  }
+  .site-nav a:not(.site-nav__hide-sm) {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .site-nav__install {
+    display: none;
+  }
+  .site-nav__sep {
+    display: none;
+  }
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+  }
+  .site-nav__hide-sm {
+    display: none;
   }
 }
 
@@ -1377,8 +1536,10 @@ th.cmp-me {
 }
 
 .site-footer__col a {
+  display: inline-block;
   color: var(--text-dim);
   font-size: 0.88rem;
+  padding: 0.2rem 0;
 }
 
 .site-footer__col a:hover {
@@ -1407,9 +1568,19 @@ th.cmp-me {
   color: var(--text-mute);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .site-footer__grid {
     grid-template-columns: 1fr 1fr;
+  }
+  .site-footer__col:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-footer__grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 }
 
@@ -1694,8 +1865,8 @@ th.cmp-me {
 /* ---- docs layout ---- */
 .docs-shell {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr) 200px;
-  gap: 2rem;
+  grid-template-columns: minmax(10rem, 12rem) minmax(0, 1fr) minmax(9rem, 12rem);
+  gap: 1.5rem 1.75rem;
   align-items: start;
 }
 
@@ -1720,7 +1891,8 @@ th.cmp-me {
 .docs-sidebar__nav a {
   display: block;
   color: var(--text-dim);
-  padding: 0.2rem 0;
+  padding: 0.32rem 0;
+  min-height: 1.75rem;
 }
 
 .docs-sidebar__nav a:hover,
@@ -1734,6 +1906,7 @@ th.cmp-me {
   width: 100%;
   align-items: center;
   justify-content: space-between;
+  min-height: 44px;
   padding: 0.45rem 0.6rem;
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -1800,10 +1973,10 @@ th.cmp-me {
   scroll-margin-top: 84px;
 }
 
-/* Tablet: drop the right rail before the three columns get cramped */
-@media (max-width: 1080px) {
+/* Tablet: drop the right rail before the article measure gets cramped */
+@media (max-width: 1000px) {
   .docs-shell {
-    grid-template-columns: 200px minmax(0, 1fr);
+    grid-template-columns: minmax(10rem, 12rem) minmax(0, 1fr);
   }
   .docs-toc {
     display: none;
@@ -1973,6 +2146,11 @@ th.cmp-me {
   gap: 0.25rem;
   border-bottom: 1px solid var(--border);
   margin-bottom: 0.9rem;
+  min-width: 0;
+}
+
+.workspace__rail .tabs__tab {
+  padding: 0.35rem 0.55rem;
 }
 
 .tabs__tab {
